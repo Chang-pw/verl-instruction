@@ -11,7 +11,90 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+EXAMPLE = """
+Instruction: 
 
+In this task, you're given an article and an answer. Your task is to generate the question for the answer based on the given article. 
+ input : Article: Discover Artistic Talents across the Country Redtory, Guangzhou Redtory, established in 2009, is a spacious art district often referred to as Guangzhou's 798. Made up of more than 30 old halls, mostly buildings of red brick, the place was originally built in 1956 as Chinese largest can factory. Some of the rusty machines from the old factory have been kept as art equipment, giving the zone an old charm. Where: No. 128 Yuancun Siheng Road, Tianhe District, Guangzhou Opening hours: Mon-Sun 10:30 am-9 pm Tank Loft, Chongqing This 12,000-square-meter art center was established on the site of a used military tank warehouse . It is the largest contemporary art base in western China, featuring modern exhibition, galleries, design studios and art bookstores. The art zone is located on the campus of the Sichuan Fine Arts Institute and was created by the school in the early 2000s. Where: No. 108 Huangjueping Center Street, Jiulongpo District, Chongqing Opening hours: 9 am-5 pm(closed Mondays) M50, Shanghai M50, also known as 50 Moganshan Road, is the center of Shanghai's contemporary art scene, with more than 100 artists whose studios are open to the public. This district, on the bank of Suzhou Creek, was previously a textile factory until it seized production in 1999. Xue Song, a Shanghai artist, was the first to establish a studio there in 2002. Where: No. 50 Moganshan Road, Pudong District, Shanghai Opening hours: 10 am-5 pm(closed Mondays) 798 Art Zone, Beijing Attracted by ordered designing, convenient traffic and unique style of Bauhaus architecture, art organizations and artists have crowded in the vacant plants and transformed them since 2001, gradually forming a district gathered galleries, art studios, cultural companies, fashion shops etc. As the earliest area where the organizations and artists moved in located in the original area of 798 factory, this place was named as Beijing 798 Art Zone. Where: No. 4 Jiuxianqiao Road, Chaoyang District, Beijing Opening hours: 10 am-6 pm 
+ Answer: Redtory, Guangzhou. Please use JSON format. Don't forget to include the keywords established. 
+
+Output:
+
+ <think>
+
+I'm given an article and an answer, and I need to generate a question that would lead to the answer based on the article. Let me analyze what I have:
+
+**Article**: The article is about various art districts across China including:
+1. Redtory, Guangzhou
+2. Tank Loft, Chongqing
+3. M50, Shanghai
+4. 798 Art Zone, Beijing
+
+**Answer**: "Redtory, Guangzhou." with instructions to use JSON format and include the keyword "established".
+
+So I need to create a question that:
+1. Is about Redtory, Guangzhou
+2. Involves the word "established"
+3. Has an answer specifically of "Redtory, Guangzhou"
+4. Should be in JSON format
+
+Looking at the article section about Redtory, the key information is:
+- Established in 2009
+- Spacious art district referred to as Guangzhou's 798
+- Made up of more than 30 old halls
+- Originally built in 1956 as Chinese largest can factory
+- Location and opening hours
+
+A question that would lead to the answer "Redtory, Guangzhou" and uses the word "established" could be something like:
+
+"Which art district was established in 2009 and is often referred to as Guangzhou's 798?"
+
+Since I need to provide this in JSON format, I'll structure it like:
+
+```json
+{
+  "question": "Which art district was established in 2009 and is often referred to as Guangzhou's 798?"
+}
+```
+
+This question specifically targets Redtory, Guangzhou, uses the keyword "established", and would naturally have "Redtory, Guangzhou" as its answer.
+</think>
+<answer>
+Based on the article and the given answer "Redtory, Guangzhou," I need to create a question that would elicit this specific response while including the keyword "established" and formatting in JSON.
+
+```json
+{
+  "question": "Which art district was established in 2009 and is often referred to as Guangzhou's 798?"
+}
+```
+
+This question directly targets the information in the article about Redtory being established in 2009 and being referred to as "Guangzhou's 798," making "Redtory, Guangzhou" the clear and specific answer.
+</answer>
+    """.strip()
+
+intruction_system_prompt = """You are a meticulous assistant who precisely adheres to all explicit and implicit constraints in user instructions. When presented with complex, multi-constraint tasks, you follow a structured approach:
+
+FORMAT: Your response must be structured with two distinct sections:
+<think> Your detailed analytical process and strategy development </think>
+<answer> Your final solution that adheres to all requirements </answer>
+
+In your <think> section, employ these strategic approaches:
+1. Constraint Analysis: Thoroughly examine each explicit and implicit constraint, identifying their interdependencies and potential conflicts.
+2. Validation Strategy: Draft preliminary answers, then methodically verify compliance with each constraint, making iterative refinements as needed.
+3. Sequencing Logic: Determine the optimal order for addressing constraints, prioritizing foundational requirements before tackling dependent ones.
+4. Edge Case Consideration: Proactively identify boundary conditions and exceptions that might challenge constraint compliance.
+5. Coherence Check: Ensure your solution maintains internal consistency while satisfying all requirements simultaneously.
+6. Format Verification: Confirm your response adheres to all specified formatting and structural guidelines.
+
+In your <answer> section, deliver a solution that precisely implements all requirements while maintaining natural flow and coherence. Your final response must satisfy all constraints without drawing attention to the mechanics of constraint management itself.
+
+Here is an example: 
+
+{example}
+""".format(example = EXAMPLE).strip()
+
+
+# print(system_prompt)
 import math
 import os
 from collections import defaultdict
@@ -80,22 +163,22 @@ class RLHFDataset(Dataset):
         tokenizer: PreTrainedTokenizer,
         processor: Optional[ProcessorMixin],
         prompt_key: str = "prompt",
-        answer_key: str = "answer",
+        # answer_key: str = "answer",
         image_key: str = "images",
         max_prompt_length: int = 1024,
         truncation: str = "error",
-        system_prompt: str = None,
+        system_prompt: str = "",
         max_pixels: int = None,
         min_pixels: int = None,
     ):
         self.tokenizer = tokenizer
         self.processor = processor
         self.prompt_key = prompt_key
-        self.answer_key = answer_key
+        # self.answer_key = answer_key
         self.image_key = image_key
         self.max_prompt_length = max_prompt_length
         self.truncation = truncation
-        self.system_prompt = system_prompt
+        self.system_prompt = intruction_system_prompt
         self.max_pixels = max_pixels
         self.min_pixels = min_pixels
 
@@ -116,7 +199,7 @@ class RLHFDataset(Dataset):
 
     def __getitem__(self, index):
         row_dict: dict = self.dataset[index]
-        messages = [{"role": "user", "content": row_dict[self.prompt_key]}]
+        messages = [{"role": "user", "content": row_dict[self.prompt_key] +  '\n\n' + 'Remember: We will check for the "<think>.*</think><answer>.*</answer>" pattern to ensure compliance.'}]
         if self.system_prompt:
             messages.insert(0, {"role": "system", "content": self.system_prompt})
 
@@ -158,5 +241,10 @@ class RLHFDataset(Dataset):
         row_dict["attention_mask"] = attention_mask
         row_dict["position_ids"] = position_ids
         row_dict["raw_prompt_ids"] = self.tokenizer.encode(prompt, add_special_tokens=False)
-        row_dict["ground_truth"] = row_dict.pop(self.answer_key)
+        instruction_id_list = row_dict.pop('instruction_id_list')
+        kwargs = row_dict.pop('kwargs')
+        row_dict["ground_truth"] = {
+            "instruction_id_list": instruction_id_list,
+            "kwargs": kwargs,
+        }
         return row_dict

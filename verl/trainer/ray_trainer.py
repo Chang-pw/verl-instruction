@@ -297,7 +297,7 @@ class RayPPOTrainer:
             tokenizer=self.tokenizer,
             processor=self.processor,
             prompt_key=self.config.data.prompt_key,
-            answer_key=self.config.data.answer_key,
+            # answer_key=self.config.data.answer_key,
             image_key=self.config.data.image_key,
             max_prompt_length=self.config.data.max_prompt_length,
             truncation="right",
@@ -328,7 +328,7 @@ class RayPPOTrainer:
             tokenizer=self.tokenizer,
             processor=self.processor,
             prompt_key=self.config.data.prompt_key,
-            answer_key=self.config.data.answer_key,
+            # answer_key=self.config.data.answer_key,
             image_key=self.config.data.image_key,
             max_prompt_length=self.config.data.max_prompt_length,
             truncation="right",
@@ -590,7 +590,7 @@ class RayPPOTrainer:
             logger.log(data=val_metrics, step=self.global_step)
             if self.config.trainer.val_only:
                 return
-
+        breakpoint()
         for _ in range(self.config.trainer.total_episodes):
             for batch_dict in self.train_dataloader:
                 self.global_step += 1
@@ -680,7 +680,7 @@ class RayPPOTrainer:
                             metrics.update(kl_metrics)
                         else:
                             batch.batch["token_level_rewards"] = batch.batch["token_level_scores"]
-
+                        breakpoint()
                         # compute advantages, executed on the driver process
                         batch = compute_advantage(
                             batch,

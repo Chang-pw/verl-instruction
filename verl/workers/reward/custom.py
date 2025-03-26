@@ -17,17 +17,20 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from ...protocol import DataProto
-from ...utils.reward_score import math_compute_score, r1v_compute_score
+from ...utils.reward_score import  r1v_compute_score,gsm8k_compute_score,instruction_compute_score
 
 
 class CustomRewardManager:
     def __init__(self, tokenizer: PreTrainedTokenizer, num_examine: int, compute_score: str):
         self.tokenizer = tokenizer
         self.num_examine = num_examine
-        if compute_score == "math":
-            self.compute_score = math_compute_score
+        if compute_score == "instruction":
+            self.compute_score = instruction_compute_score
         elif compute_score == "r1v":
             self.compute_score = r1v_compute_score
+        elif compute_score == "gsm8k":
+            self.compute_score = gsm8k_compute_score
+        
         else:
             raise NotImplementedError()
 
@@ -61,7 +64,7 @@ class CustomRewardManager:
                 already_print += 1
                 print("[prompt]", prompt_str)
                 print("[response]", response_str)
-                print("[ground_truth]", ground_truth)
+                # print("[ground_truth]", ground_truth)
                 print("[score]", score)
 
         return reward_tensor
