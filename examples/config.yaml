@@ -1,9 +1,9 @@
 data:
-  train_files: /data1/bowei/EasyR1/data/train.parquet
-  val_files: /data1/bowei/EasyR1/data/test.parquet
+  train_files: /home/ins_follow/zengjie/verl-instruction/data/train.parquet
+  val_files: /home/ins_follow/zengjie/verl-instruction/data/test.parquet
   prompt_key: prompt
   max_prompt_length: 2048
-  max_response_length: 2048
+  max_response_length: 4096
   rollout_batch_size: 256
   shuffle: true
   seed: 1
