@@ -30,7 +30,6 @@ def instruction_compute_score(answer, item):
     if not answer_match:
         return 0
     
-    problem = item['problem']
     ids_to_check = item['instruction_id_list']
     args_to_check = item['kwargs']
     resp_to_check = answer_match.group(1)
