@@ -380,6 +380,10 @@ class RayPPOTrainer:
         reward_tensor_lst = []
         # Lists to collect samples for the table
         sample_inputs, sample_outputs, sample_scores = [], [], []
+        # ac_count=0
+        # c_count=0
+        # score_l=0
+        # len(self.val_dataloader) = 1
         for test_data in self.val_dataloader:
             test_batch = DataProto.from_single_dict(test_data)
             # Store original inputs
@@ -410,9 +414,14 @@ class RayPPOTrainer:
             sample_outputs.extend(output_texts)
 
             test_batch = test_batch.union(test_output_gen_batch)
-
+            
             # evaluate using reward_function
-            reward_tensor = self.val_reward_fn(test_batch)
+            # len(test_batch) =60
+
+            reward_tensor,score_c,score_l = self.val_reward_fn(test_batch)
+            # ac_count+=a_len_c
+            # c_count+=len_c
+            # score_l +=all_right
 
             # Store scores
             scores = reward_tensor.sum(-1).cpu().tolist()
@@ -420,9 +429,13 @@ class RayPPOTrainer:
 
             reward_tensor_lst.append(reward_tensor)
 
+        # score_c =ac_count/c_count
+        # score_l = score_l/len(self.val_dataloader)
+
         self._maybe_log_val_generations(inputs=sample_inputs, outputs=sample_outputs, scores=sample_scores)
+
         reward_score = torch.cat(reward_tensor_lst, dim=0).sum(-1).mean().item()
-        return {"val/test_score": reward_score}
+        return {"val/score_c": score_c,"val/score_l": score_l,"val/reward": reward_score}
 
     def init_workers(self) -> None:
         """Init resource pool and worker group"""

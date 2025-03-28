@@ -16,7 +16,7 @@
 # from .math import math_compute_score
 from .r1v import r1v_compute_score
 from .gsm8k import gsm8k_compute_score
-from .instruction_reward import instruction_compute_score
+from .instruction_reward import instruction_compute_score,instruction_val_compute_score
 
 
-__all__ = [ "r1v_compute_score","gsm8k_compute_score","instruction_compute_score"]
+__all__ = [ "r1v_compute_score","gsm8k_compute_score","instruction_compute_score","instruction_val_compute_score"]

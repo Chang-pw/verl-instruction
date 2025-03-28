@@ -175,7 +175,7 @@ class DataProto:
     batch: Optional[TensorDict] = None
     non_tensor_batch: Dict[str, Any] = field(default_factory=dict)
     meta_info: Dict[str, Any] = field(default_factory=dict)
-
+    
     def __post_init__(self):
         self.check_consistency()  # perform necessary checking
 

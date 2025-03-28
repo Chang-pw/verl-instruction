@@ -17,15 +17,20 @@ import torch
 from transformers import PreTrainedTokenizer
 
 from ...protocol import DataProto
-from ...utils.reward_score import  r1v_compute_score,gsm8k_compute_score,instruction_compute_score
+from ...utils.reward_score import  r1v_compute_score,gsm8k_compute_score,instruction_compute_score,instruction_val_compute_score
 
 
 class CustomRewardManager:
     def __init__(self, tokenizer: PreTrainedTokenizer, num_examine: int, compute_score: str):
         self.tokenizer = tokenizer
         self.num_examine = num_examine
+        self.mode = ""
         if compute_score == "instruction":
             self.compute_score = instruction_compute_score
+            self.mode = "train"
+        elif compute_score == "instruction_val":
+            self.compute_score = instruction_val_compute_score
+            self.mode = "val"
         elif compute_score == "r1v":
             self.compute_score = r1v_compute_score
         elif compute_score == "gsm8k":
@@ -35,10 +40,16 @@ class CustomRewardManager:
             raise NotImplementedError()
 
     def __call__(self, data: DataProto) -> torch.Tensor:
+        
         reward_tensor = torch.zeros_like(data.batch["responses"], dtype=torch.float32)
-        already_print = 0
-
+        # reward_tensor.shape=torch.Size([60, 4096])
+        ac_count=0
+        c_count=0
+        score_l=0
+        already_print=0
+        # len(data) = 60
         for i in range(len(data)):
+            
             data_item = data[i]  # DataProtoItem
 
             prompt_ids = data_item.batch["prompts"]
@@ -56,8 +67,14 @@ class CustomRewardManager:
             response_str = self.tokenizer.decode(valid_response_ids, skip_special_tokens=True)
 
             ground_truth = data_item.non_tensor_batch["ground_truth"]
+            if self.mode == "train":
+                score = self.compute_score(response_str, ground_truth)
+            elif self.mode == "val":
+                all_right,a_len_c,len_c,score = self.compute_score(response_str, ground_truth)
+                ac_count+=a_len_c
+                c_count+=len_c
+                score_l +=all_right
 
-            score = self.compute_score(response_str, ground_truth)
             reward_tensor[i, valid_response_length - 1] = score
 
             if already_print < self.num_examine:
@@ -65,6 +82,13 @@ class CustomRewardManager:
                 print("[prompt]", prompt_str)
                 print("[response]", response_str)
                 # print("[ground_truth]", ground_truth)
-                print("[score]", score)
+                print("[reward score]", score)
 
-        return reward_tensor
+        if self.mode=='train':
+            return reward_tensor
+        elif self.mode=='val':
+            score_c =ac_count/c_count
+            score_l = score_l/len(data)
+            return reward_tensor,score_c,score_l
+        
+        

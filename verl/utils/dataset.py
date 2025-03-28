@@ -255,6 +255,6 @@ class RLHFDataset(Dataset):
         kwargs = row_dict.pop('kwargs')
         row_dict["ground_truth"] = {
             "instruction_id_list": instruction_id_list,
-            "kwargs": kwargs,
+            "kwargs": kwargs
         }
         return row_dict
